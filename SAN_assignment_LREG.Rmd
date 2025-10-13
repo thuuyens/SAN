@@ -65,7 +65,6 @@ Now deal with the detected issues in the right order. Build an alternative model
 
 
 ### Feature selection
-The goal now is to perform feature selection and remove irrelevant variables. Compare several different feature selection methods and choose the most appropriate one. Demonstrate that applying feature selection to the full model yields very different results compared to applying it to an alternative model without issues. Finally, explain the selected model.
 
 ```{r}
 #### add your code here (1p) #### 
