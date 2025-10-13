@@ -1,0 +1,83 @@
+---
+title: "A well-specified linear regression model"
+author: "your name"
+output: html_document
+---
+
+### Introduction
+A regression model may suffer from various issues. When constructing such a model, it is important to check for assumptions such as linearity, independence of errors, normality of residuals, homoscedasticity and the absence of multicollinearity. Additionally, there are other potential issues, such as irrelevant variables, which can reduce model performance. In this assignment you will aim to achieve the best possible linear model using the techniques you have already learned.
+
+### Input data 
+In this assignment, you will work with a dataset that contains 200 samples, 10 features $x_1,\dots,x_{10}$ and one dependent variable $y$. Your general task is to develop the best possible linear model. One that is both simple and interpretable while still performing well. You are expected to correctly interpret the model. Assume that outliers are not expected (if they are present they should be removed), and our primary focus is on identifying common trends rather than a few exceptional samples.
+
+### Load the necessary libraries and the dataset
+```{r load}
+library(car) # use vif function for multicollinearity detection
+library(lmtest) # use bptest for homoscedasticity test
+library(glmnet) # shrinked linear models
+
+d <- read.csv("lreg_data.csv")
+```
+
+### The full linear model
+Let us start with a full linear model. The first task is to evaluate the model based on its first summary. Then, check its assumptions and detect its potential issues. Your task is to evaluate the plots and tests performed below, you should also further develop the tests (propose their alternatives).  
+
+```{r full model and its potential issues}
+#### improve the code below so that you can verbally explain the full model ####
+
+# construct the model
+full_lm <- lm(y ~ ., d)
+summary(full_lm)
+
+# check for the issues
+
+# start with the residual plot
+plot(full_lm, which=1)
+
+# perform a homoscedasticity test
+bptest(full_lm)
+
+# normality of residuals? Q-Q plot and normality test
+plot(full_lm, which = 2)  
+shapiro.test(residuals(full_lm))
+
+# search for outliers
+plot(full_lm, which = 4)
+which(cooks.distance(full_lm) > 4 / (nrow(d) - length(coef(full_lm))))
+
+# detect potential multicollinearity
+vif(full_lm)
+```
+#### Add your verbal summary here (1p): 
+
+
+
+### Remove the issues from the full model
+
+Now deal with the detected issues in the right order. Build an alternative model and show that it works better than the full model. Finally, verbally justify all the decisions that you made and explain their effects.
+
+```{r deal with the issues}
+#### add your code here (1p) ####
+
+```
+#### Add your verbal summary here (1p): 
+
+
+
+### Feature selection
+The goal now is to perform feature selection and remove irrelevant variables. Compare several different feature selection methods and choose the most appropriate one. Demonstrate that applying feature selection to the full model yields very different results compared to applying it to an alternative model without issues. Finally, explain the selected model.
+
+```{r}
+#### add your code here (1p) #### 
+
+```
+#### Add your verbal summary including the final wrap up here (1p): 
+
+#### Grading 
++ 1p for selection of proper methods for assumption verification and their explanation
++ 1p for the correct implementation of issue removal
++ 1p for its explanation and right decisions in further model design themselves
++ 1p for proper application of feature selection techniques and their comparison 
++ 1p for comprehensive evaluation of all the model improvements and the final wrap up
+
+
