@@ -50,7 +50,8 @@ vif(full_lm)
 ```
 #### Add your verbal summary here (1p): 
 
-
+### Model has several issues. It is not completely useless, however, there are several problems that need to be addressed.
+### 
 
 ### Remove the issues from the full model
 
