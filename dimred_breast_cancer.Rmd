@@ -1,0 +1,133 @@
+---
+title: "Dimensionality reduction in a real dataset"
+output: html_document
+---
+
+In this tutorial we will apply PCA and t-SNE in a real dataset. We will compare their outcomes with LDA learned before.
+
+```{r setup, include=FALSE, warning=FALSE}
+library(dplyr)
+library(factoextra)
+library(MASS)
+library(ROCR)
+library(Rtsne)
+```
+
+## Breast cancer dataset
+
+The Breast Cancer Wisconsin Diagnostic Data Set is a widely used dataset for breast cancer detection and classification. It contains 569 samples of breast tissue, each described by 30 numerical features derived from fine needle aspirates of breast masses (a type of biopsy performed using a small needle to obtain samples of tissue and fluid from solid or cystic breast lesions). These features include mean, standard error, and worst (maximum) values for various cell characteristics like radius, texture, smoothness, compactness, concavity, symmetry, and fractal dimension.
+
+Each sample is labeled as either malignant (cancerous) or benign (non-cancerous). The dataset is balanced, making it suitable for binary classification tasks. It is often used in machine learning and statistical modeling for diagnostic purposes. The dataset can be also downloaded here https://www.kaggle.com/uciml/breast-cancer-wisconsin-data.
+
+```{r read the data}
+data <- read.csv("breast_cancer.csv")
+data <- data %>% 
+  dplyr::select(-id, -X) # remove unnecessary columns
+
+# Explore the data
+data_numeric <- data %>% 
+  dplyr::select(-diagnosis)
+
+glimpse(data_numeric)
+```
+## Principal component analysis (PCA)
+
+```{r run PCA}
+
+# Perform PCA
+data_pca <- prcomp(data_numeric)
+
+# Plot the PCA output. Is it a good projection given how many features we have?
+lbs <- data$diagnosis
+fviz_pca_ind(data_pca, geom.ind = "point", pointshape = 21, 
+             fill.ind = lbs,
+             palette = "jco", 
+             addEllipses = TRUE,
+             legend.title = "Diagnosis") +
+  ggtitle("Breast cancer 2D PCA-plot") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+```{r analyze PCA, warning=FALSE, fig.width=10, out.width="100%"}
+# Test your understanding of PCA
+# How many components do we need to sufficiently capture data?
+pca_summary<-summary(data_pca)
+pca_summary$importance[,1:6]
+
+# What is the primary composition of first two principal components
+loadings <- abs(data_pca$rotation[, 1:2])  # Loadings for PC1 and PC2
+top_vars <- names(sort(rowSums(loadings), decreasing = TRUE)[1:8])
+data_pca_subset <- data_pca
+data_pca_subset$rotation <- data_pca_subset$rotation[top_vars, ]
+biplot(data_pca_subset)
+
+# If the projection is too dense, can you obtain the information other ways?
+data_pca$rotation[,"PC1"] %>% abs() %>% sort(decreasing = T) %>% head()
+```
+
+```{r run t-SNE}
+# Reduce the dimensions using t-SNE
+
+tsne_res <- Rtsne::Rtsne(data_numeric, perplexity=50)
+
+tsne_res$Y %>% 
+  as.data.frame() %>%
+  mutate(diagnosis = data$diagnosis) %>% 
+  ggplot(aes(x=V1, y=V2, col=diagnosis)) + 
+  geom_point()
+```
+
+```{r run LDA}
+# LDA works with labels
+labels <- data$diagnosis %>% as.factor()
+
+# Load the LDA() and other supporting function from the 3rd assignment into the environment.
+lda_model <- lda(data_numeric, labels)
+
+# Now you can compare LDA and PCA dimensionality reduction:
+lda_model$scaling
+
+# Initial test of LDA predictive accuracy, no CV
+lda_values <- predict(lda_model)
+
+lda_plotData <- as.data.frame(lda_values$x) %>% 
+  mutate(diagnosis=labels,
+         jitter=rnorm(nrow(data)))
+
+lda_plotData %>% 
+  ggplot(aes(x=LD1, y=jitter, col=diagnosis)) + 
+  geom_point() +
+  scale_y_continuous(limits=c(-10, 10),labels = NULL)
+
+print("Confusion matrix:")
+table(lda_values$class,labels)
+print(paste("LDA train accuracy:", sum(diag(table(lda_values$class,labels)))/length(labels)))
+print(paste("LDA train AUROC:", performance(prediction(lda_values$posterior[,2],labels), measure = "auc")@y.values[[1]][1]))
+```
+# Independent work
+
+1. Briefly summarize the main analytical conclusions about the dataset.
+2. What are the disadvantages of using all features, for example, in a classification task or visualization? How do we select the "right features"?
+3. Investigate the influence of the settings in the individual dimension reduction methods on their outcomes. Specifically, focus on scaling in PCA and LDA (no scaling was performed above) and perplexity in t-SNE.
+4. Complete the code below and compare the classification accuracy achieved with the three approaches. Explain the differences. Study the role of scaling.
+
+```{r independent work, classification, warning=FALSE}
+# split the data
+train.idx <- sample(1:nrow(data),size = nrow(data) * 0.7)
+
+# run the logistic model with the given dataset
+# use the train/test split given by train.idx
+logReg<-function(data,labels,train.idx){
+  # train the model
+  logistic_data <- data.frame(data,labels)
+  logistic_model <- glm(labels ~ ., data = logistic_data[train.idx, ], family = binomial)
+  logistic_predictions <- predict(logistic_model, newdata = logistic_data[-train.idx, ], type = "response")
+  # report test accuracy and AUROC
+  return(c(sum(diag(table(logistic_predictions>0.5,labels[-train.idx])))/length(labels[-train.idx]),
+           performance(prediction(logistic_predictions,labels[-train.idx]), measure = "auc")@y.values[[1]][1]))
+}
+
+# run logistic regression on all features as a benchmark
+paste("Logistic regression with all features (accuracy and AUROC for test data):",paste(logReg(data_numeric,labels,train.idx),collapse=","))
+```

@@ -1,0 +1,64 @@
+---
+title: "Dimensionality reduction"
+output: pdf_document
+---
+
+### Overview
+
+This notebook serves as an introduction to PCA in R. We will explore two artificial datasets - starting with a plane and later with a sphere. We will look at the way PCA works and what insights can we obtain from performing such an analysis.
+
+```{r setup, echo=FALSE, message=FALSE, warning=FALSE,}
+
+```
+
+## PCA - artificial datasets
+### Data generation
+```{r}
+
+```
+
+### Exploring the PCA output
+```{r}
+
+```
+
+```{r}
+
+```
+
+### A bit of PCA math
+```{r}
+
+```
+
+```{r}
+
+# Result: the 2D reconstruction in 3D is still a perfect plane. 
+# We can however view this imperfect reconstruction as noise removal!
+```
+
+### Notes on reconstruction error
+
+```
+
+Reconstruction error is a metric, that tells us how well the PCA reduction preserves information in our data. In the previous section we tried to recover the original space using both full 3D transformation and 2D reduction. The 3D case was loss-less, whereas in 2D the points didn't 100% fit their original images. This is natural as we go from lower-dimensional space to higher one.
+
+When looking at the reconstruction error, let us see the error caused by noise in the input space. This error serves as a reference. Its value is `r recError(plane, noisyPlane)`. We witnessed, that reconstruction with no dimensionality reduction fully recovers the original *noisyPlane*, the reconstruction error is `r recError(noisyPlane, noisyPlane_reconstr)`. Next, we can see that *noisyPlane* is still well captured after the reduction to 2D, the reconstruction error is `r recError(noisyPlane, noisyPlane_2d_reconstr)`. 
+
+Now, let us compare the original plane without any noise and the plane recovered after the dimensionality reduction. This error is `r recError(plane, noisyPlane_2d_reconstr)`. If smaller than the error in the *noisyPlane* (the first one), dimensionality reduction works as (partial) denoising.
+
+There is a couple of reasons why denoising is not perfect in terms of our reconstruction error. Firstly, the plane is learnt from a limited sample, it is not recovered perfectly. Compare the normal vector of the original plane (0.66,0.33,0.66) and the normal vector of the denoised plane given by PC3 (the perpendicular vector to the recovered plane captured by PC1 and PC2) which is `r pca_res$rotation[,"PC3"]`. Secondly, denosing means to map to any point that lies on the manifold, that ncessarily does not have to be the original point (compare the two error definitions in the lecture).
+
+### When PCA doesn't work
+This section demonstrates that PCA has limitations when it comes to data with rather uniform variance in all directions.
+An example can be a dataset forming a sphere:
+```{r}
+
+```
+
+The procedure remains the same. The script shows that PCA captures the manifold, dimensionality reduction maintains a major part of variance and may partly denoise the samples.
+```{r}
+
+
+```
+

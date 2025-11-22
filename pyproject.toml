@@ -8,6 +8,7 @@ dependencies = [
     "cvtools>=0.1.16",
     "jupyterlab>=4.4.8",
     "matplotlib>=3.10.6",
+    "nbconvert>=7.16.6",
     "numpy>=2.3.3",
     "pandas>=2.3.3",
     "scikit-learn>=1.7.2",
